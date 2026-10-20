@@ -1,0 +1,121 @@
+{
+  "run": {
+    "dataset": "data/eval/cloudbox_support_v1.jsonl (45 cases)",
+    "agent / baseline model": "anthropic:claude-sonnet-5-5",
+    "retrieval evaluator model": "anthropic:claude-sonnet-5-5",
+    "embeddings": "openai:text-embedding-3-small",
+    "retrieval": "hybrid, top_k=4, re-rank pool=0, chunk_max_chars=1600, store=memory",
+    "agent limits": "max_steps=8, max_tool_calls=12",
+    "web search": "hermetic fixture corpus (data/web_fixtures)",
+    "judge": "not run",
+    "simulated date": "2026-10-09",
+    "finished": "2026-10-12T06:48:36+00:00"
+  },
+  "summary": {
+    "agent": {
+      "cases": 45,
+      "resolution_rate": 0.9111111111111111,
+      "answer_correctness": 0.9111111111111111,
+      "mean_fact_recall": 1.0,
+      "behavior_accuracy": 0.9555555555555556,
+      "hallucination_rate": 0.044444444444444446,
+      "groundedness": 1.0,
+      "ungrounded_answers": 0,
+      "retrieval_recall": 0.8974358974358975,
+      "cited_relevant_rate": 1.0,
+      "avg_tool_calls": 1.5777777777777777,
+      "avg_kb_searches": 1.2222222222222223,
+      "web_search_rate": 0.06666666666666667,
+      "account_lookup_when_needed": 1.0,
+      "web_search_when_needed": 0.75,
+      "avg_llm_calls": 3.3555555555555556,
+      "avg_input_tokens": 12615.777777777777,
+      "avg_output_tokens": 756.6444444444444,
+      "avg_latency_ms": 8788.317606670575,
+      "p50_latency_ms": 8392.36570004141,
+      "p95_latency_ms": 14194.292599975597,
+      "total_cost_usd": 0.7549992,
+      "avg_cost_usd": 0.01677776,
+      "avg_evaluator_calls": 1.2222222222222223,
+      "avg_evaluator_cost_usd": 0.004963866666666667,
+      "errors": 0,
+      "step_limit_hits": 0
+    }
+  },
+  "by_category": {
+    "agent": {
+      "adversarial": {
+        "cases": 4,
+        "resolved": 3,
+        "correct": 3,
+        "hallucinated": 1,
+        "avg_tool_calls": 1.25,
+        "avg_latency_ms": 9887.703675005469
+      },
+      "ambiguous": {
+        "cases": 4,
+        "resolved": 4,
+        "correct": 4,
+        "hallucinated": 0,
+        "avg_tool_calls": 0.5,
+        "avg_latency_ms": 4537.655924999854
+      },
+      "conversation_memory": {
+        "cases": 2,
+        "resolved": 2,
+        "correct": 2,
+        "hallucinated": 0,
+        "avg_tool_calls": 2.5,
+        "avg_latency_ms": 12033.954599988647
+      },
+      "customer_specific": {
+        "cases": 11,
+        "resolved": 10,
+        "correct": 10,
+        "hallucinated": 1,
+        "avg_tool_calls": 2.272727272727273,
+        "avg_latency_ms": 10316.782090918754
+      },
+      "kb_missing": {
+        "cases": 4,
+        "resolved": 4,
+        "correct": 4,
+        "hallucinated": 0,
+        "avg_tool_calls": 1.5,
+        "avg_latency_ms": 8878.830025001662
+      },
+      "multi_document": {
+        "cases": 6,
+        "resolved": 6,
+        "correct": 6,
+        "hallucinated": 0,
+        "avg_tool_calls": 1.3333333333333333,
+        "avg_latency_ms": 9093.832783333104
+      },
+      "policy_exception": {
+        "cases": 4,
+        "resolved": 2,
+        "correct": 2,
+        "hallucinated": 0,
+        "avg_tool_calls": 2.0,
+        "avg_latency_ms": 8681.724350011791
+      },
+      "requires_web": {
+        "cases": 4,
+        "resolved": 4,
+        "correct": 4,
+        "hallucinated": 0,
+        "avg_tool_calls": 1.5,
+        "avg_latency_ms": 8746.284499997273
+      },
+      "straightforward_faq": {
+        "cases": 6,
+        "resolved": 6,
+        "correct": 6,
+        "hallucinated": 0,
+        "avg_tool_calls": 1.0,
+        "avg_latency_ms": 6738.331583338247
+      }
+    }
+  }
+}

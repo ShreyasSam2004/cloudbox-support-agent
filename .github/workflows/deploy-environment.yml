@@ -1,0 +1,132 @@
+name: Deploy environment
+
+# Reusable: plan (read-only identity) → [required reviewers on prod] → push images → apply the saved plan
+#           → run ingestion job → smoke test through Front Door.
+#
+# GitHub configuration (variables, not secrets — none of these values is sensitive):
+#   environment "<env>-plan": AZURE_CLIENT_ID = client ID of id-cloudbox-ci-<env>-plan
+#   environment "<env>":      AZURE_CLIENT_ID = client ID of id-cloudbox-ci-<env>-apply (prod: required reviewers)
+#   repository:               AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, TF_STATE_STORAGE_ACCOUNT
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TF_VERSION: 1.14.2
+  TF_DIR: infra/terraform/environments/${{ inputs.environment }}
+  ARM_USE_OIDC: "true"
+  ARM_USE_AZUREAD: "true"
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_subscription_id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_image_tag: ${{ inputs.image_tag }}
+
+jobs:
+  plan:
+    name: Plan (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}-plan
+    env:
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - name: Init
+        run: >
+          terraform -chdir="$TF_DIR" init -input=false -backend-config=backend.hcl
+          -backend-config="storage_account_name=${{ vars.TF_STATE_STORAGE_ACCOUNT }}"
+      - name: Plan
+        run: |
+          terraform -chdir="$TF_DIR" plan -input=false -lock=false -out=tfplan
+          terraform -chdir="$TF_DIR" show -no-color tfplan > "$TF_DIR/plan.txt"
+          tail -n 40 "$TF_DIR/plan.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ inputs.environment }}
+          path: |
+            ${{ env.TF_DIR }}/tfplan
+            ${{ env.TF_DIR }}/plan.txt
+          retention-days: 7
+
+  apply:
+    name: Apply (${{ inputs.environment }})
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ inputs.environment }}
+          path: ${{ env.TF_DIR }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-images
+          path: /tmp/images
+      - name: Init
+        run: >
+          terraform -chdir="$TF_DIR" init -input=false -backend-config=backend.hcl
+          -backend-config="storage_account_name=${{ vars.TF_STATE_STORAGE_ACCOUNT }}"
+      - name: Push the release images to this environment's registry
+        run: |
+          ACR=$(terraform -chdir="$TF_DIR" output -raw acr_name)
+          SERVER=$(terraform -chdir="$TF_DIR" output -raw acr_login_server)
+          az acr login --name "$ACR"
+          for image in cloudbox-support-api cloudbox-support-ui; do
+            docker load --input "/tmp/images/$image.tar"
+            docker tag "$image:${{ inputs.image_tag }}" "$SERVER/$image:${{ inputs.image_tag }}"
+            docker push "$SERVER/$image:${{ inputs.image_tag }}"
+          done
+      - name: Apply the reviewed plan
+        run: terraform -chdir="$TF_DIR" apply -input=false tfplan
+      - name: Run knowledge-base ingestion job
+        run: |
+          RG="rg-cloudbox-${{ inputs.environment }}"
+          JOB=$(terraform -chdir="$TF_DIR" output -raw ingest_job_name)
+          EXECUTION=$(az containerapp job start --name "$JOB" --resource-group "$RG" --query name -o tsv)
+          for _ in $(seq 1 90); do
+            STATUS=$(az containerapp job execution show --name "$JOB" --resource-group "$RG" \
+              --job-execution-name "$EXECUTION" --query properties.status -o tsv)
+            echo "ingestion: $STATUS"
+            [ "$STATUS" = "Succeeded" ] && exit 0
+            [ "$STATUS" = "Failed" ] && exit 1
+            sleep 10
+          done
+          echo "ingestion timed out" && exit 1
+      - name: Smoke test through Front Door
+        run: |
+          URL=$(terraform -chdir="$TF_DIR" output -raw frontend_url)
+          for _ in $(seq 1 30); do
+            if curl -fsS "$URL/" -o /dev/null; then break; fi
+            sleep 10
+          done
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$URL/api/v1/chat" \
+            -H 'Content-Type: application/json' -d '{"message":"How do I reset my API key?"}')
+          echo "chat endpoint: HTTP $code"
+          # 200 in dev (demo auth); 401 in staging/prod (JWT required) — both prove the route and app are up.
+          [ "$code" = "200" ] || [ "$code" = "401" ]

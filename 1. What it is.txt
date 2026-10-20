@@ -1,0 +1,149 @@
+1. What it is
+It's an AI customer-support assistant for CloudBox, a made-up cloud-storage company. A customer types a question such as "I cancelled but was charged, can I get a refund?" The assistant:
+fg
+reads CloudBox's policy documents,
+checks that customer's account,
+searches the web if general technical knowledge is needed,
+and replies with an answer where every claim is cited, so it doesn't make things up.plain RAG retrieves information for an answer; your agent can choose and combine multiple actions before answering
+
+A llm doesent look up facts it predicts next token and its trained to sound plausible not to be correct it keeps going with the most likely sounding answer thats a hallucination to reduce it  i ground the model with RAG so it answers from real document i lower the temperature to say i dont know when the context doesent have the answer and i verify anything that matters and i verify . LLM dont know whats true they know what sounds true . LLMs learn statistical patterns that can encode factual knowledge, but fluent generation alone is not proof that an answer is true.RAG reduces the chance of hallucination; it doesn't eliminate it. The quality of the retrieved documents, the relevance of retrieval, and the model's ability to use evidence all matter
+
+Tool 1: search_knowledge_base
+Searches the company's official policies, FAQs and technical documents.
+Example: "Find the rule for customers charged after cancelling a subscription."
+Its job: Find the relevant written rules.
+
+Tool 2: get_customer_account
+Looks up account-specific information, such as the customer's plan, cancellation time and charge.
+Its job: Find out what happened to this customer.
+Access checks are important: the application must ensure the requester is authorized to see that account.
+
+Tool 3: web_search
+Searches the web for additional information when the internal documents are insufficient—for example, current technical information.
+Its job: Find external information.
+Rag vs fine tuning :- 
+
+Rag is for knowledge at query time i search the documents i pull the relevant chunks and add them to the prompt the model answers from that context like an open book . Fine tuning is for behavior i train the model on examples so it changes its tone or its output format what it learns end up in the weights if the data changes often or need citations i use rag if i need the same tone and format everytime i fine tune . fine tuning teaches the model how to talk and rag tells what to say .
+
+Phase 1
+Indexing — prepare the documents
+This happens ahead of time, before a customer asks a question.
+20 policy documents
+Split into meaningful sections
+Convert each section into a vector
+Store searchable sections and vectors
+
+Phase 2
+Retrieval — find the right information
+This happens whenever the agent searches the knowledge base.
+Customer question
+Search documents in two ways
+Combine and grade results
+Give the best passages to Claude 
+
+Your project uses hybrid search, meaning it combines meaning-based search and keyword-based search.
+
+Meaning search
+Looks for passages with a similar meaning, even when the wording differs.
+Example: "money back" can match "refund."
+
+Keyword search
+Looks for matching words, codes, names and numbers.
+Example: CBX-4292 or a specific subscription plan name.
+
+Your system retrieves up to 20 candidates from each search method and combines the rankings into a pool of 20 candidates.
+
+Your code uses an algorithm called Reciprocal Rank Fusion (RRF).
+Don't worry about the formula. The simple idea is:
+If a passage ranks highly in both searches, it should generally be ranked highly in the combined list.
+
+The combined ranking rewards passages that perform well across both methods.
+
+Step 3: Haiku grades the 20 passages
+This is another AI model in your architecture: Claude Haiku.
+Your project uses two different Claude models for two different jobs:
+Claude Sonnet — the main agent
+Decides what to do, which tool to call, whether more information is needed and how to answer the customer.
+
+Claude Haiku — the passage grader
+Examines the 20 retrieved passages and scores how useful each is for the customer's question.
+
+Terraform doesn't build your RAG application or run your AI agent. It creates and manages the Azure infrastructure where your application runs
+Docker packages these applications into containers.
+Azure provides the servers, databases, networking, security, and monitoring.
+Terraform tells Azure exactly which resources to create and how they should be connected
+
+With Terraform, you describe these resources in code, and Terraform creates them for you.
+This is called Infrastructure as Code (IaC).
+
+Terraform configuration
+terraform plan
+terraform apply
+Azure resources created
+
+Step 1: Terraform creates the networking
+Think of the VNet as a private office building.
+Different subnets are different rooms, and NSGs are security guards controlling permitted network traffic.For example, the API can connect to PostgreSQL over a private network route, without exposing PostgreSQL to the public internet.
+
+Step 2: Terraform creates PostgreSQL
+Your RAG system needs a database that stores:
+
+Document chunks	Refund policy subsection
+Embeddings	Numerical vectors
+Customers	C1006, plan, quota usage
+Sessions	Conversation history
+Traces	Agent tool calls and execution details
+
+Terraform provisions Azure Database for PostgreSQL Flexible Server and its database.
+Your application uses the pgvector extension for vector similarity searches.
+
+Step 3: Terraform creates Container Registry
+Now you have application code:
+The deployment process builds two Docker images:
+
+FastAPI code → Docker image → Azure Container Registry
+React code → Docker image → Azure Container Registry
+
+Azure Container Registry (ACR) is essentially a storage location for your built container images.
+Terraform creates the registry. Your build/deployment pipeline builds and pushes the images.
+
+Step 4: Terraform creates Container Apps
+Your application has three container-based workloads.
+
+Container App: ui
+Runs nginx, serving the built React application to customers.
+
+Container App: api
+Runs FastAPI and the AI agent. It handles requests, retrieval, customer account lookups and answer generation.
+
+Container Apps Job: ingest
+Runs the document-processing pipeline to parse, chunk, embed and load knowledge into PostgreSQL.
+
+The ingestion job is particularly important.
+It runs as a job rather than a continuously serving web application because ingestion needs to execute when documents need processing, not on every customer request.
+Your deployment process triggers the ingestion job after deployment. Terraform provisions and configures the job, but creating a job resource alone doesn't mean ingestion automatically executes after every deployment.
+
+Step 5: Terraform creates identity and secrets access
+Your system needs API keys for OpenAI embeddings and Anthropic models.
+You don't want to put these keys directly into your Python code or Docker image.
+Instead, Azure Key Vault stores them securely.
+Your setup uses a user-assigned managed identity, which acts like an Azure identity card for the application.
+
+Step 6: Terraform creates monitoring
+Suppose the API container crashes repeatedly.
+You need to know what happened.
+Terraform creates and configures:
+- Log Analytics for centralized logs.
+- Application Insights for application telemetry.
+- Diagnostic settings for platform logs.
+- Alerts for API restarts, database CPU, and relevant log conditions.
+- An action group to route notifications.
+This is what helps your team detect problems in production
+
+Step 7: Terraform optionally creates Front Door
+For staging and production, your configuration enables Azure Front Door and a Web Application Firewall (WAF).
+Front Door sits at the edge in front of the application, providing traffic routing and edge protection.
+For development, your configuration disables it because of the Free Trial limitations you described
+
+Terraform maintains a state file, commonly named terraform.tfstate.
+It records information linking resources in your Terraform configuration to real resources in Azure. 

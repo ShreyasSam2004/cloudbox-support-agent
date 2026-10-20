@@ -1,0 +1,245 @@
+[
+  {
+    "customer_id": "C1001",
+    "organization_name": "Acme Analytics",
+    "contact_name": "Dana Whitfield",
+    "contact_email": "dana.whitfield@acme-analytics.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "pro", "billing_cycle": "monthly", "status": "active", "seats": 7, "price_usd": 49.0,
+      "started_at": "2025-03-21T00:00:00Z",
+      "current_period_start": "2026-09-21T00:00:00Z", "current_period_end": "2026-10-21T00:00:00Z",
+      "renewal_at": "2026-10-21T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "ch_1001_0919", "created_at": "2026-09-21T00:01:12Z", "amount_usd": 49.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1001-0019", "description": "Pro monthly"},
+      {"charge_id": "ch_1001_0818", "created_at": "2026-08-21T00:01:05Z", "amount_usd": 49.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1001-0018", "description": "Pro monthly"}
+    ],
+    "usage": {"api_requests_this_period": 412000, "api_monthly_quota": 2000000, "rate_limit_per_min": 1000, "peak_requests_per_min_24h": 420, "http_429_last_24h": 0, "storage_used_gb": 830, "storage_limit_gb": 2048},
+    "security": {"account_status": "active", "two_factor_enabled": true}
+  },
+  {
+    "customer_id": "C1002",
+    "organization_name": "Brightline Studio",
+    "contact_name": "Marco Ruiz",
+    "contact_email": "marco@brightline-studio.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "pro", "billing_cycle": "monthly", "status": "canceled", "seats": 4, "price_usd": 49.0,
+      "started_at": "2025-11-08T00:00:00Z",
+      "current_period_start": "2026-09-08T00:00:00Z", "current_period_end": "2026-10-08T00:00:00Z",
+      "renewal_at": "2026-10-08T00:00:00Z",
+      "cancel_requested_at": "2026-10-07T21:14:00Z", "cancel_effective_at": "2026-10-08T00:00:00Z",
+      "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "ch_1002_1008", "created_at": "2026-10-08T00:02:41Z", "amount_usd": 49.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1002-0012", "description": "Pro monthly renewal (period 2026-10-08 to 2026-11-08)"},
+      {"charge_id": "ch_1002_0908", "created_at": "2026-09-08T00:01:55Z", "amount_usd": 49.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1002-0011", "description": "Pro monthly renewal"}
+    ],
+    "usage": {"api_requests_this_period": 1200, "api_monthly_quota": 2000000, "rate_limit_per_min": 1000, "storage_used_gb": 96, "storage_limit_gb": 2048},
+    "security": {"account_status": "active", "two_factor_enabled": false},
+    "notes": ["Cancellation submitted via dashboard by the Owner."]
+  },
+  {
+    "customer_id": "C1003",
+    "organization_name": "Northwind Logistics",
+    "contact_name": "Aisha Bello",
+    "contact_email": "aisha.bello@northwind.example",
+    "contact_role": "Billing Admin",
+    "subscription": {
+      "plan": "business", "billing_cycle": "monthly", "status": "active", "seats": 8, "price_usd": 232.0,
+      "started_at": "2024-10-05T00:00:00Z",
+      "current_period_start": "2026-10-05T00:00:00Z", "current_period_end": "2026-11-05T00:00:00Z",
+      "renewal_at": "2026-11-05T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "auth_1003_1005", "created_at": "2026-10-05T00:00:30Z", "amount_usd": 232.0, "status": "pending", "kind": "authorization_hold", "description": "Card verification hold after payment method update"},
+      {"charge_id": "ch_1003_1005", "created_at": "2026-10-05T00:01:02Z", "amount_usd": 232.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1003-0024", "description": "Business monthly, 8 users"}
+    ],
+    "usage": {"api_requests_this_period": 640000, "api_monthly_quota": 10000000, "rate_limit_per_min": 3000, "storage_used_gb": 21000, "storage_limit_gb": 40960},
+    "security": {"account_status": "active", "two_factor_enabled": true},
+    "notes": ["Payment method updated on 2026-10-04 (new Visa card)."]
+  },
+  {
+    "customer_id": "C1004",
+    "organization_name": "Globex Corporation",
+    "contact_name": "Hank Scorpio",
+    "contact_email": "h.scorpio@globex.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "enterprise", "billing_cycle": "annual", "status": "active", "seats": 300, "price_usd": 86400.0,
+      "started_at": "2025-01-15T00:00:00Z",
+      "current_period_start": "2026-01-15T00:00:00Z", "current_period_end": "2027-01-15T00:00:00Z",
+      "renewal_at": "2027-01-15T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "inv_1004_2026", "created_at": "2026-01-15T09:00:00Z", "amount_usd": 86400.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1004-0002", "description": "Enterprise annual term 2026-01-15 to 2027-01-15 (wire)"}
+    ],
+    "usage": {"api_requests_this_period": 48000000, "api_monthly_quota": 100000000, "rate_limit_per_min": 15000, "storage_used_gb": 410000, "storage_limit_gb": 1000000},
+    "security": {"account_status": "active", "two_factor_enabled": true, "sso_enforced": true},
+    "contract": {"contract_id": "MSA-2025-0419", "term_start": "2026-01-15T00:00:00Z", "term_end": "2027-01-15T00:00:00Z", "annual_value_usd": 86400.0, "notice_period_days": 60, "account_manager": "Priya Raman"}
+  },
+  {
+    "customer_id": "C1005",
+    "organization_name": "Initech",
+    "contact_name": "Peter Gibbons",
+    "contact_email": "peter.gibbons@initech.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "starter", "billing_cycle": "monthly", "status": "active", "seats": 3, "price_usd": 15.0,
+      "started_at": "2026-02-12T00:00:00Z",
+      "current_period_start": "2026-09-12T00:00:00Z", "current_period_end": "2026-10-12T00:00:00Z",
+      "renewal_at": "2026-10-12T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "ch_1005_0912", "created_at": "2026-09-12T00:00:48Z", "amount_usd": 15.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1005-0008", "description": "Starter monthly"}
+    ],
+    "usage": {"api_requests_this_period": 8100, "api_monthly_quota": 250000, "rate_limit_per_min": 300, "storage_used_gb": 120, "storage_limit_gb": 500},
+    "security": {"account_status": "locked", "locked_reason": "3 lockouts within 24 hours after repeated failed sign-ins; automatic unlock disabled", "failed_login_attempts_24h": 17, "lockouts_24h": 3, "two_factor_enabled": true, "sso_enforced": false}
+  },
+  {
+    "customer_id": "C1006",
+    "organization_name": "Umbrella Health Labs",
+    "contact_name": "Alice Abernathy",
+    "contact_email": "alice@umbrella-health.example",
+    "contact_role": "Admin",
+    "subscription": {
+      "plan": "pro", "billing_cycle": "monthly", "status": "active", "seats": 9, "price_usd": 49.0,
+      "started_at": "2025-06-15T00:00:00Z",
+      "current_period_start": "2026-09-15T00:00:00Z", "current_period_end": "2026-10-15T00:00:00Z",
+      "renewal_at": "2026-10-15T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "ch_1006_0915", "created_at": "2026-09-15T00:01:10Z", "amount_usd": 49.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1006-0016", "description": "Pro monthly"}
+    ],
+    "usage": {"api_requests_this_period": 2000000, "api_monthly_quota": 2000000, "rate_limit_per_min": 1000, "peak_requests_per_min_24h": 610, "http_429_last_24h": 18450, "http_429_breakdown": {"quota_exceeded": 18450, "rate_limit_exceeded": 0}, "storage_used_gb": 1400, "storage_limit_gb": 2048},
+    "security": {"account_status": "active", "two_factor_enabled": true},
+    "notes": ["Monthly API quota exhausted on 2026-10-06 14:22 UTC."]
+  },
+  {
+    "customer_id": "C1007",
+    "organization_name": "Stark Robotics",
+    "contact_name": "Tony Rhodes",
+    "contact_email": "t.rhodes@stark-robotics.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "business", "billing_cycle": "monthly", "status": "active", "seats": 12, "price_usd": 348.0,
+      "started_at": "2025-04-01T00:00:00Z",
+      "current_period_start": "2026-10-01T00:00:00Z", "current_period_end": "2026-11-01T00:00:00Z",
+      "renewal_at": "2026-11-01T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "ch_1007_1001", "created_at": "2026-10-01T00:00:59Z", "amount_usd": 348.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1007-0019", "description": "Business monthly, 12 users"}
+    ],
+    "usage": {"api_requests_this_period": 4100000, "api_monthly_quota": 10000000, "rate_limit_per_min": 3000, "peak_requests_per_min_24h": 4800, "http_429_last_24h": 2310, "http_429_breakdown": {"rate_limit_exceeded": 2310, "quota_exceeded": 0}, "storage_used_gb": 31000, "storage_limit_gb": 61440},
+    "security": {"account_status": "active", "two_factor_enabled": true}
+  },
+  {
+    "customer_id": "C1008",
+    "organization_name": "Hooli XYZ",
+    "contact_name": "Gavin Belson",
+    "contact_email": "gavin@hooli-xyz.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "pro", "billing_cycle": "monthly", "status": "trialing", "seats": 5, "price_usd": 49.0,
+      "started_at": "2026-09-27T10:00:00Z", "trial_ends_at": "2026-10-11T10:00:00Z",
+      "payment_method_on_file": true
+    },
+    "charges": [],
+    "usage": {"api_requests_this_period": 21000, "api_monthly_quota": 100000, "rate_limit_per_min": 300, "storage_used_gb": 40, "storage_limit_gb": 2048},
+    "security": {"account_status": "active", "two_factor_enabled": false}
+  },
+  {
+    "customer_id": "C1009",
+    "organization_name": "Pied Piper",
+    "contact_name": "Richard Hendricks",
+    "contact_email": "richard@piedpiper.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "pro", "billing_cycle": "monthly", "status": "past_due", "seats": 6, "price_usd": 49.0,
+      "started_at": "2025-10-02T00:00:00Z",
+      "current_period_start": "2026-10-02T00:00:00Z", "current_period_end": "2026-11-02T00:00:00Z",
+      "renewal_at": "2026-11-02T00:00:00Z", "payment_method_on_file": true,
+      "payment_failure": {"failed_at": "2026-10-02T00:00:40Z", "reason": "card_expired", "retry_1": "2026-10-05 (failed)", "retry_2": "2026-10-09 (scheduled)", "final_retry": "2026-10-16 (scheduled)"}
+    },
+    "charges": [
+      {"charge_id": "ch_1009_1005", "created_at": "2026-10-05T00:00:40Z", "amount_usd": 49.0, "status": "failed", "kind": "renewal", "invoice_id": "INV-1009-0013", "description": "Retry 1 - card expired"},
+      {"charge_id": "ch_1009_1002", "created_at": "2026-10-02T00:00:40Z", "amount_usd": 49.0, "status": "failed", "kind": "renewal", "invoice_id": "INV-1009-0013", "description": "Pro monthly - card expired"}
+    ],
+    "usage": {"api_requests_this_period": 90000, "api_monthly_quota": 2000000, "rate_limit_per_min": 1000, "storage_used_gb": 300, "storage_limit_gb": 2048},
+    "security": {"account_status": "active", "two_factor_enabled": true}
+  },
+  {
+    "customer_id": "C1010",
+    "organization_name": "Vandelay Imports",
+    "contact_name": "Art Vandelay",
+    "contact_email": "art@vandelay.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "pro", "billing_cycle": "annual", "status": "active", "seats": 3, "price_usd": 468.0,
+      "started_at": "2026-09-27T00:00:00Z",
+      "current_period_start": "2026-09-27T00:00:00Z", "current_period_end": "2027-09-27T00:00:00Z",
+      "renewal_at": "2027-09-27T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "ch_1010_0927", "created_at": "2026-09-27T15:20:00Z", "amount_usd": 468.0, "status": "succeeded", "kind": "subscription", "invoice_id": "INV-1010-0001", "description": "Pro annual - first purchase"}
+    ],
+    "usage": {"api_requests_this_period": 3000, "api_monthly_quota": 2000000, "rate_limit_per_min": 1000, "storage_used_gb": 12, "storage_limit_gb": 2048},
+    "security": {"account_status": "active", "two_factor_enabled": false}
+  },
+  {
+    "customer_id": "C1011",
+    "organization_name": "Wayne Enterprises Media",
+    "contact_name": "Lucius Fox",
+    "contact_email": "lfox@wayne-media.example",
+    "contact_role": "Billing Admin",
+    "subscription": {
+      "plan": "pro", "billing_cycle": "annual", "status": "active", "seats": 8, "price_usd": 468.0,
+      "started_at": "2024-10-05T00:00:00Z",
+      "current_period_start": "2026-10-05T00:00:00Z", "current_period_end": "2027-10-05T00:00:00Z",
+      "renewal_at": "2027-10-05T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "ch_1011_1005", "created_at": "2026-10-05T00:00:21Z", "amount_usd": 468.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1011-0003", "description": "Pro annual renewal"}
+    ],
+    "usage": {"api_requests_this_period": 37, "api_monthly_quota": 2000000, "rate_limit_per_min": 1000, "storage_used_gb": 210, "storage_limit_gb": 2048, "usage_since_last_renewal": {"api_calls": 37, "file_uploads": 0}},
+    "security": {"account_status": "active", "two_factor_enabled": true}
+  },
+  {
+    "customer_id": "C1012",
+    "organization_name": "Fernwood Bakery",
+    "contact_name": "Mary Hartman",
+    "contact_email": "mary@fernwood-bakery.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "starter", "billing_cycle": "monthly", "status": "active", "seats": 2, "price_usd": 15.0,
+      "started_at": "2026-03-01T00:00:00Z",
+      "current_period_start": "2026-10-01T00:00:00Z", "current_period_end": "2026-11-01T00:00:00Z",
+      "renewal_at": "2026-11-01T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "ch_1012_1001a", "created_at": "2026-10-01T00:00:37Z", "amount_usd": 15.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1012-0042", "description": "Starter monthly"},
+      {"charge_id": "ch_1012_1001b", "created_at": "2026-10-01T00:00:39Z", "amount_usd": 15.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1012-0042", "description": "Starter monthly"}
+    ],
+    "usage": {"api_requests_this_period": 450, "api_monthly_quota": 250000, "rate_limit_per_min": 300, "storage_used_gb": 35, "storage_limit_gb": 500},
+    "security": {"account_status": "active", "two_factor_enabled": false}
+  },
+  {
+    "customer_id": "C1013",
+    "organization_name": "Oceanic Travel",
+    "contact_name": "Jack Shephard",
+    "contact_email": "jack@oceanic-travel.example",
+    "contact_role": "Owner",
+    "subscription": {
+      "plan": "business", "billing_cycle": "annual", "status": "active", "seats": 10, "price_usd": 2880.0,
+      "started_at": "2024-09-20T00:00:00Z",
+      "current_period_start": "2026-09-20T00:00:00Z", "current_period_end": "2027-09-20T00:00:00Z",
+      "renewal_at": "2027-09-20T00:00:00Z", "payment_method_on_file": true
+    },
+    "charges": [
+      {"charge_id": "ch_1013_0920", "created_at": "2026-09-20T00:00:15Z", "amount_usd": 2880.0, "status": "succeeded", "kind": "renewal", "invoice_id": "INV-1013-0003", "description": "Business annual renewal, 10 users"}
+    ],
+    "usage": {"api_requests_this_period": 52000, "api_monthly_quota": 10000000, "rate_limit_per_min": 3000, "storage_used_gb": 8800, "storage_limit_gb": 51200, "usage_since_last_renewal": {"api_calls": 52000, "file_uploads": 1240}},
+    "security": {"account_status": "active", "two_factor_enabled": true}
+  }
+]

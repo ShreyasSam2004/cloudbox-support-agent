@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local data / indexes
+.data/
+*.sqlite
+
+# Evaluation scratch (reports/ is committed; raw scratch is not)
+reports/scratch/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfplan
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+# Workstation-specific Terraform values (e.g. your own object ID) — not committed
+infra/terraform/**/local.auto.tfvars
+infra/terraform/bootstrap/*.tfplan

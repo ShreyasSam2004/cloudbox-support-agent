@@ -1,0 +1,79 @@
+name: Deploy
+
+# Build once, promote the same images through dev → staging → prod.
+# * Azure authentication is OpenID Connect only (federated credentials created by the bootstrap stack);
+#   no cloud credentials are stored in GitHub.
+# * Each environment applies exactly the plan produced (and reviewable) in its plan job.
+# * prod applies run in the "prod" GitHub environment, which has required reviewers: the job waits for
+#   explicit approval.
+# * Nothing in this workflow ever runs `terraform destroy`.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      security-events: write
+
+  build:
+    name: Build release images
+    needs: ci
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: meta
+        run: echo "tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: cloudbox-support-api:${{ steps.meta.outputs.tag }}
+          outputs: type=docker,dest=/tmp/cloudbox-support-api.tar
+          cache-from: type=gha,scope=cloudbox-support-api
+      - uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          tags: cloudbox-support-ui:${{ steps.meta.outputs.tag }}
+          outputs: type=docker,dest=/tmp/cloudbox-support-ui.tar
+          cache-from: type=gha,scope=cloudbox-support-ui
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-images
+          path: /tmp/cloudbox-support-*.tar
+          retention-days: 7
+
+  dev:
+    needs: build
+    uses: ./.github/workflows/deploy-environment.yml
+    with:
+      environment: dev
+      image_tag: ${{ needs.build.outputs.tag }}
+
+  staging:
+    needs: [build, dev]
+    uses: ./.github/workflows/deploy-environment.yml
+    with:
+      environment: staging
+      image_tag: ${{ needs.build.outputs.tag }}
+
+  prod:
+    needs: [build, staging]
+    uses: ./.github/workflows/deploy-environment.yml
+    with:
+      environment: prod
+      image_tag: ${{ needs.build.outputs.tag }}

@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      python:
+        patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directories: [/, /frontend]
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: terraform
+    directories: [/infra/terraform/environments/dev, /infra/terraform/environments/staging, /infra/terraform/environments/prod, /infra/terraform/bootstrap]
+    schedule: { interval: weekly }

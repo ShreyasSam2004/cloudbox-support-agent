@@ -1,0 +1,53 @@
+name: Benchmark (baseline vs agent)
+
+# Runs the evaluation dataset against the Anthropic and OpenAI APIs and publishes the report as an artifact.
+# Manual or weekly — it spends model tokens, so it is not part of every PR.
+
+on:
+  workflow_dispatch:
+    inputs:
+      systems:
+        description: "Systems to run"
+        default: "baseline,agent"
+      judge:
+        description: "Also run the LLM judge"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    environment: eval # holds the ANTHROPIC_API_KEY and OPENAI_API_KEY secrets
+    timeout-minutes: 120
+    env:
+      ENVIRONMENT: test
+      LLM_PROVIDER: anthropic
+      AGENT_MODEL: ${{ vars.EVAL_AGENT_MODEL || 'claude-sonnet-5-5' }}
+      EVALUATOR_MODEL: ${{ vars.EVAL_EVALUATOR_MODEL || 'claude-haiku-5-5' }}
+      AGENT_MAX_OUTPUT_TOKENS: "16000"
+      EMBEDDING_PROVIDER: openai
+      EMBEDDING_MODEL: text-embedding-3-small
+      EMBEDDING_DIM: "1536"
+      VECTOR_STORE: memory
+      MEMORY_INDEX_PATH: .data/kb_index.json
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uv python install 3.12 && uv sync --frozen
+      - name: Build the index
+        run: uv run cloudbox ingest
+      - name: Run benchmark
+        run: >
+          uv run python -m backend.evaluation.run --out reports/ci-${{ github.run_id }}
+          --systems "${{ inputs.systems || 'baseline,agent' }}" ${{ inputs.judge && '--judge' || '' }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: reports/ci-${{ github.run_id }}

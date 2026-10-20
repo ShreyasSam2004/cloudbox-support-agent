@@ -1,0 +1,200 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "1"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  python:
+    name: Lint · types · unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv sync --frozen
+      - name: Format
+        run: uv run ruff format --check backend tests
+      - name: Lint (incl. bandit security rules)
+        run: uv run ruff check backend tests
+      - name: Type check
+        run: uv run mypy backend
+      - name: Unit, agent, API and evaluation tests
+        run: uv run pytest -m "not integration and not live" --cov=backend --cov-report=xml --cov-report=term
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+
+  integration:
+    name: PostgreSQL + pgvector integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: cloudbox
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: cloudbox
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U cloudbox" --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://cloudbox:ci-only-password@localhost:5432/cloudbox
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv sync --frozen
+      - run: uv run pytest -m integration -v
+
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Dependency audit
+        run: npm audit --audit-level=high --omit=dev
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+  security:
+    name: Dependency & secret scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - name: Python dependency audit (pip-audit)
+        run: |
+          uv export --frozen --no-dev --no-emit-project --format requirements-txt > requirements.txt
+          uvx pip-audit --strict --requirement requirements.txt
+      - name: Secret scan (gitleaks)
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.28.0 \
+            detect --source /repo --redact --verbose --exit-code 1
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    strategy:
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+      - uses: github/codeql-action/analyze@v3
+
+  docker:
+    name: Docker build & image scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      matrix:
+        include:
+          - image: cloudbox-support-api
+            context: .
+          - image: cloudbox-support-ui
+            context: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          tags: ${{ matrix.image }}:${{ github.sha }}
+          load: true
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+      - name: Trivy image scan (blocking on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ matrix.image }}:${{ github.sha }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+      - name: Trivy SBOM-based report (SARIF)
+        if: always()
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ matrix.image }}:${{ github.sha }}
+          scanners: vuln
+          format: sarif
+          output: trivy-${{ matrix.image }}.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-${{ matrix.image }}.sarif
+          category: trivy-${{ matrix.image }}
+
+  terraform:
+    name: Terraform fmt · validate · lint · security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.2
+      - name: Format
+        run: terraform fmt -recursive -check infra/terraform
+      - name: Validate every root module
+        run: |
+          for dir in infra/terraform/bootstrap infra/terraform/environments/*; do
+            echo "::group::$dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+      - uses: terraform-linters/setup-tflint@v4
+      - name: TFLint (azurerm ruleset)
+        run: |
+          tflint --init --config "$GITHUB_WORKSPACE/.tflint.hcl"
+          tflint --recursive --config "$GITHUB_WORKSPACE/.tflint.hcl" --chdir infra/terraform
+      - name: IaC security scan (Trivy)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: config
+          scan-ref: infra/terraform
+          severity: HIGH,CRITICAL
+          exit-code: "1"

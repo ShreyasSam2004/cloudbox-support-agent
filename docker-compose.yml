@@ -1,0 +1,80 @@
+# Local development stack: PostgreSQL + pgvector, one-shot init (migrations, seed, ingestion), API, UI.
+# Models come from .env (Azure-hosted models, or Ollama on the host for offline work).
+#
+#   docker compose up --build        → UI on http://localhost:8080, API on http://localhost:8000
+#   (override host ports with API_PORT / UI_PORT if they are taken)
+#
+# Ports bind to 127.0.0.1 only. The Postgres password below is for this local stack only.
+
+x-api-env: &api-env
+  ENVIRONMENT: local
+  LOG_JSON: "true"
+  VECTOR_STORE: pgvector
+  SESSION_STORE: postgres
+  CUSTOMER_STORE: postgres
+  TRACE_STORE: postgres
+  DATABASE_URL: postgresql://cloudbox:${POSTGRES_PASSWORD:-cloudbox-local-only}@postgres:5432/cloudbox
+  OLLAMA_BASE_URL: http://host.docker.internal:11434
+  CORS_ALLOWED_ORIGINS: '["http://localhost:8080"]'
+  TRUST_FORWARDED_FOR: "true"
+
+x-hardening: &hardening
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: cloudbox
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cloudbox-local-only}
+      POSTGRES_DB: cloudbox
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cloudbox -d cloudbox"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  init:
+    build: .
+    image: cloudbox-support-api:local
+    command: ["sh", "-c", "cloudbox seed-customers && cloudbox ingest"]
+    env_file:
+      - path: .env
+        required: false
+    environment: *api-env
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    <<: *hardening
+
+  api:
+    image: cloudbox-support-api:local
+    env_file:
+      - path: .env
+        required: false
+    environment: *api-env
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    ports: ["127.0.0.1:${API_PORT:-8000}:8000"]
+    depends_on:
+      init: { condition: service_completed_successfully }
+    <<: *hardening
+
+  ui:
+    build: ./frontend
+    image: cloudbox-support-ui:local
+    ports: ["127.0.0.1:${UI_PORT:-8080}:8080"]
+    environment:
+      API_UPSTREAM: http://api:8000
+    depends_on: [api]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+
+volumes:
+  pgdata:
