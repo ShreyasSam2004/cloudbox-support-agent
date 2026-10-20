@@ -54,7 +54,7 @@ jobs:
           terraform -chdir="$TF_DIR" plan -input=false -lock=false -out=tfplan
           terraform -chdir="$TF_DIR" show -no-color tfplan > "$TF_DIR/plan.txt"
           tail -n 40 "$TF_DIR/plan.txt"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tfplan-${{ inputs.environment }}
           path: |
