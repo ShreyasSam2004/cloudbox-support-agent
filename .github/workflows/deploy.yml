@@ -51,7 +51,7 @@ jobs:
           tags: cloudbox-support-ui:${{ steps.meta.outputs.tag }}
           outputs: type=docker,dest=/tmp/cloudbox-support-ui.tar
           cache-from: type=gha,scope=cloudbox-support-ui
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-images
           path: /tmp/cloudbox-support-*.tar

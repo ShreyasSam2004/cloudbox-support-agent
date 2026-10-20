@@ -47,7 +47,7 @@ jobs:
         run: >
           uv run python -m backend.evaluation.run --out reports/ci-${{ github.run_id }}
           --systems "${{ inputs.systems || 'baseline,agent' }}" ${{ inputs.judge && '--judge' || '' }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: benchmark-report
           path: reports/ci-${{ github.run_id }}
