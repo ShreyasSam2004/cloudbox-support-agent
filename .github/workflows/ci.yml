@@ -117,10 +117,10 @@ jobs:
         language: [python, javascript-typescript]
     steps:
       - uses: actions/checkout@v5
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
 
   docker:
     name: Docker build & image scan
@@ -162,7 +162,7 @@ jobs:
           scanners: vuln
           format: sarif
           output: trivy-${{ matrix.image }}.sarif
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-${{ matrix.image }}.sarif
