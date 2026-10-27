@@ -11,7 +11,7 @@ RUN npm run build
 
 # nginx 1.30 stable on Alpine 3.24; OS packages are upgraded at build time so the image does not
 # inherit fixed CVEs from a stale base layer (CI blocks on fixable HIGH/CRITICAL findings).
-FROM nginxinc/nginx-unprivileged:1.30-alpine AS runtime
+FROM nginxinc/nginx-unprivileged:1.31-alpine AS runtime
 USER root
 RUN apk upgrade --no-cache
 USER 101
